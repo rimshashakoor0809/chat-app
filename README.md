@@ -5,9 +5,7 @@ This is a real-time chat application built using Node.js, React, Material-UI, an
 ### Features
 
 - Real-time Messaging: Users can send and receive messages instantly, enabling real-time communication.
-- Multiple Users: The application supports multiple users simultaneously, allowing them to join and participate in chat conversations.
 - User-friendly Interface: The application has a modern and intuitive user interface built with React and Material-UI, providing a pleasant user experience.
-- Notifications: Users receive notifications whenever a new message is received, ensuring they stay informed about the ongoing conversations.
 - Responsive Design: The application is responsive and can be accessed on various devices, including desktops, tablets, and mobile devices.
 
 ### Technologies Used
@@ -48,4 +46,4 @@ Contributions are welcome! If you find any issues or have suggestions for improv
 
 ### Contact
 
-For any questions or inquiries, please contact [Your Name] at [your-email@example.com].
+For any questions or inquiries, please contact [Rimsha Shakoor] at [rimsha.shakoor@gmail.com].
