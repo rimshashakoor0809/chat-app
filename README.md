@@ -17,7 +17,7 @@ This is a real-time chat application built using Node.js, React, Material-UI, an
 
 ### Installation
 
-1. Clone the repository: `git clone <repository-url>`
+1. Clone the repository: `git clone <[repository-url](https://github.com/rimshashakoor0809/chat-app.git)>`
 2. Navigate to the server directory: `cd server`
 3. Install the server dependencies: `npm install`
 4. Start the server: `npm start`
