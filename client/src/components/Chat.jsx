@@ -39,12 +39,12 @@ const Chat = ({ socket, username, room }) => {
 
     // message data
     const messageData = {
-      room,
+      roomId: room,
       author: username,
       message,
       date: formatAMPM(new Date(Date.now())),
-      status: 'sent'
-
+      edited: false,
+      messageId: new Date(Date.now()).toISOString()
     }
 
     // sending message to socket
