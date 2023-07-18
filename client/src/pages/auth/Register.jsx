@@ -3,9 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import PasswordInput from '../../components/ui/PasswordInput';
 import PasswordStrength from '../../components/ui/PasswordStrength';
-import { Button, Card } from '@mui/material';
+import { Button,  Divider, InputLabel, Paper, Typography } from '@mui/material';
 import styles from './auth.module.scss';
-import { FlexCenter } from '../../components/flex';
+import {  FlexTextColumn } from '../../components/flex';
+import { useRegisterMutation } from '../../redux/api/userSlice';
+import Spinner from '../../components/ui/Spinner';
 
 
 
@@ -13,13 +15,14 @@ const initialState = {
   name: '',
   email: '',
   password: '',
-  confirmPassword: '',
 };
 
 const Register = () => {
 
   const [formData, setFormData] = useState(initialState);
-  const { name, email, password, confirmPassword } = formData;
+  const { name, email, password } = formData;
+  
+   const [register, { isLoading, isSuccess, isError, error }] = useRegisterMutation();
 
   const navigate = useNavigate();
 
@@ -71,7 +74,8 @@ const Register = () => {
   const registerUser = async (e) => {
     e.preventDefault();
 
-    if (!name || !email || !password || !confirmPassword) {
+    
+    if (!name || !email || !password ) {
       return toast.error('Please fill in all the required fields.')
     }
 
@@ -79,58 +83,102 @@ const Register = () => {
       return toast.error('Password must be upto 8 characters ');
     }
 
+    const userData = {
+      name, email, password,
+    }
 
-    if (password !== confirmPassword) {
-      return toast.error('Password do not match.');
+    console.log('form data register', formData);
+    try {
+      await register(userData);
+      console.log('check success', isSuccess)
+      console.log('check isError', isError)
+      console.log('check error', error)
+      
+    } catch (error) {
+      console.log('Actual Error', error)
+      toast.error('Something went wrong. Please try again.')
+      
     }
   }
 
+  useEffect(() => {
+    if (isError && !isLoading && error) {
+        toast.error(error?.data?.message)
+      }
+
+      if (isSuccess && !isLoading && !error) {
+        toast.success('Account Registered Successfully')
+        navigate('/login')
+      }
+    
+  }, [isSuccess,isLoading,error, isError,navigate])
+
   return (
     <div className={`container ${styles.auth}`}>
-      <Card sx={{   paddingRight:'1.5rem' }}
+
+      {isLoading && <Spinner/>}
+      <Paper sx={{
+        padding: '1rem', borderRadius: '15px',
+        boxShadow:'rgba(17, 17, 26, 0.1) 0px 4px 16px, rgba(17, 17, 26, 0.05) 0px 8px 32px;'
+      }}
       >
         <div className={styles.form}>
+
+          <FlexTextColumn gap={1}>
+
           
 
-          <h2 style={{ color: '#141414' }}>Register</h2>
+          <Typography variant='h6' fontWeight='bold'>Real-time Chat App</Typography>
+          <Divider/>
       
 
           <form onSubmit={registerUser}>
+
+            <FlexTextColumn marginTop={2}>
+
+            <InputLabel>Name</InputLabel>
+
             <input
               type="text"
-              placeholder="Name"
+              placeholder="John Doe"
               required
               name="name"
               value={name}
               onChange={inputHandler}
             />
 
+            </FlexTextColumn>
+
+            <FlexTextColumn>
+            <InputLabel>Email Address</InputLabel>
+
             <input
               type="email"
-              placeholder="Company email address"
+              placeholder="abc@example.com"
               required
               name="email"
               value={email}
               onChange={inputHandler}
             />
 
+            </FlexTextColumn>
+
+            <FlexTextColumn>
+            <InputLabel>Password</InputLabel>
+
             <PasswordInput
-              placeholder="Password"
+              placeholder="********"
               name="password"
               value={password}
               onChange={inputHandler}
             />
-
-            <PasswordInput
-              placeholder="Confirm Password"
-              name="confirmPassword"
-              value={confirmPassword}
-              onChange={inputHandler}
-            />
+              
+            </FlexTextColumn>
 
             {/* Password Strength */}
 
-           
+              <FlexTextColumn marginY={1}>
+                
             <PasswordStrength
               checkCase={checkCase}
               checkLength={checkLength}
@@ -138,30 +186,33 @@ const Register = () => {
               isChar={isChar}
             />
 
-            <FlexCenter marginY={2}>
+            </FlexTextColumn>
+           
 
-            <Button variant='contained' type="submit" >
+
+            <Button variant='contained' type="submit" fullWidth>
               Register
             </Button>
 
-            </FlexCenter>
+          
 
 
           </form>
 
 
           <span className={styles.register}>
-            <Link to="/" style={{
-              color: '#447ab1'
-            }}>Home</Link>
-            <p> &nbsp; Already have an account? &nbsp;</p>
-            <Link to="/login" style={{
-              color: '#447ab1'
-            }}>Login</Link>
+        
+            <p> &nbsp; Already signed up? &nbsp;</p>
+            <Link to="/login"
+              style={{color: '#447ab1'}}>Login now</Link>
           </span>
 
+
+        </FlexTextColumn>
+
         </div>
-      </Card>
+
+      </Paper>
     </div>
 
   )

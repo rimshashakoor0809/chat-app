@@ -1,13 +1,32 @@
 const app = require("./app");
 const http = require('http');
+const dotenv = require('dotenv');
+const sequelize = require('./connect');
+const initializeDatabase = require('./databaseInitializer');
 
-// creates server for us
-const server = http.createServer(app);
-const port = 3001
+
+dotenv.config({ path: './.env' });
+
+const port = process.env.PORT;
 
 
-server.listen(port, () => {
-  console.log(`Server Activated 🚀 at port: ${port}`)
+// test connection 
+sequelize.authenticate().then(() => {
+  console.log('MYSQL Connection has been established successfully.🔥');
+}).catch(err => {
+  console.log('Unable to connect to the database:', err);
 })
+
+
+// database synchronization
+
+initializeDatabase();
+
+// listening to port
+app.listen(port, () => {
+  console.log(`Server Activated: Application has started at port ${port}💖`);
+});
+
+
 
 

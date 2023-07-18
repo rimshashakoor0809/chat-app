@@ -1,5 +1,6 @@
 const http = require('http');
 const app = require('../app');
+const { Server } = require('socket.io');
 
 
 const server = http.createServer(app);
@@ -30,8 +31,8 @@ io.on('connection', socket => {
 
     console.log('Message', data);
     try {
+
     
-      // Emit an event to all clients to receive the new message
       socket.to(data?.room).emit('receive_message', data);
 
     } catch (error) {

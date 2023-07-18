@@ -4,7 +4,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import { Routes, Route } from "react-router-dom"
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
-import Home from "./Home";
+import ChatList from "./pages/chat/ChatList";
+import Chat from './components/Chat'
 
 
 
@@ -15,12 +16,14 @@ function App() {
   return (
 
     <>
-      <ToastContainer/>
+      <ToastContainer />
       <Routes>
 
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/chat" element={<ChatList />} />
+        <Route path="/chat/:receiverId" element={<Chat />} />
       </Routes>
     </>
 

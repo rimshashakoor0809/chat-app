@@ -1,33 +1,36 @@
-import { Button, TextField } from '@mui/material';
-import React from 'react'
-import {SendRounded} from '@mui/icons-material'
-import { FlexBetween} from './flex';
+import { Box, Button, TextField } from '@mui/material';
+import React, { useState } from 'react'
+import { Mood, SendRounded } from '@mui/icons-material'
+import { FlexBetween } from './flex';
+import Picker from 'emoji-picker-react';
 
 
 
 const ChatForm = ({ message, onChange, sendMessage }) => {
-  
+
+
 
   return (
-      <FlexBetween width='100%'>
-          <TextField
-              name='message'
-              placeholder='Enter text here...'
-              size='small'
-              onChange={onChange}
+    <FlexBetween width='100%'>
+      
+      <TextField
+        name='message'
+        placeholder='Enter text here...'
+        size='small'
+        onChange={onChange}
         value={message}
-        onKeyDown={event=> {event.key === 'Enter' && sendMessage()}}
+        onKeyDown={event => { event.key === 'Enter' && sendMessage() }}
         fullWidth
       >
-              
-          </TextField>
+
+      </TextField>
       <Button
         variant='contained'
         onClick={sendMessage}
-   
+
       >
-              <SendRounded sx={{color:'#fcfcfc'}} />
-          </Button>
+        <SendRounded sx={{ color: '#fcfcfc' }} />
+      </Button>
     </FlexBetween>
   )
 }

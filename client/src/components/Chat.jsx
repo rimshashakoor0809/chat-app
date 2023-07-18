@@ -1,15 +1,39 @@
-import { Avatar, Divider, Paper, Typography } from '@mui/material';
-import React, { useEffect, useState } from 'react'
-import { FlexBetween, FlexCenter, FlexColumn, FlexTextColumn } from './flex';
+import { Avatar, Button, Divider,  Paper, Typography } from '@mui/material';
+import React, { useEffect, useRef, useState } from 'react'
+import { FlexBetween, FlexCenter, FlexColumn, FlexRow, FlexTextColumn } from './flex';
 import ChatForm from './ChatForm';
 import ChatBubble from './ChatBubble';
-import { useRef } from 'react';
+import { toast } from 'react-toastify'
 
-const Chat = ({ socket, username, room }) => {
+import { useNavigate, useParams } from 'react-router-dom';
+import { useGetUserWithIDQuery } from '../redux/api/userSlice';
+import { ArrowBack } from '@mui/icons-material';
+import { useAddMessageMutation, useGetAllMsgsQuery } from '../redux/api/msgSlice';
+import Spinner from '../components/ui/Spinner';
+
+
+
+
+const Chat = () => {
 
   const [message, setMessage] = useState('');
   const [messageList, setMessageList] = useState([]);
   const scrollRef = useRef(null);
+  const navigate = useNavigate();
+  const { receiverId } = useParams();
+
+
+  const { data, isSuccess, isLoading, isError } = useGetUserWithIDQuery(receiverId);
+  
+  const [addMessage, { data: msgData, isLoading: isMsgLoading, isSuccess: isMsgSuccess, isError: isMsgError }] = useAddMessageMutation();
+
+  
+
+  const { data: allMsgData, isSuccess: isAllMsgSuccess, isLoading: isAllMsgLoading, isError: isAllMsgError } = useGetAllMsgsQuery(receiverId);
+  
+
+  console.log('message list:', allMsgData);
+
 
 
   // message state handler
@@ -17,76 +41,147 @@ const Chat = ({ socket, username, room }) => {
     setMessage(e.target.value);
   }
 
-  // message time formatter in 12-hour format
-  const formatAMPM = (date) => {
-    let hours = date.getHours();
-    let minutes = date.getMinutes();
-    let ampm = hours >= 12 ? 'pm' : 'am';
-    hours = hours % 12;
-    hours = hours ? hours : 12; // the hour '0' should be '12'
-    minutes = minutes < 10 ? '0' + minutes : minutes;
-    let strTime = hours + ':' + minutes + ' ' + ampm;
-    return strTime;
-  }
+ 
 
   // send message method
   const sendMessage = async () => {
 
-    // If message is empty
-    if (!message) {
-      alert('Please enter a message to send.')
-    }
+    try {
 
-    // message data
-    const messageData = {
-      roomId: room,
-      author: username,
-      message,
-      date: formatAMPM(new Date(Date.now())),
-      edited: false,
-      messageId: new Date(Date.now()).toISOString()
-    }
+      if (!message) {
+        return toast.error('Please enter a message to send');
+      }
 
-    // sending message to socket
-    await socket.emit('send_message', messageData);
-    // adding message to list
-    setMessageList(list => [...list, messageData]);
-    setMessage('');
+      const myData = {
+          receiver: receiverId,
+          message: message
+      }        
+      
+      await addMessage(myData);
+    
+
+      
+    } catch (error) {
+      console.log('Error:', error)
+    }
+  //   // message data
+  //   const messageData = {
+
+  //     roomId: room,
+  //     author: data?.userInfo?.username,
+  //     message,
+  //     senderId: data?.userInfo?.user_id
+  //   }
+
+  //   // sending message to socket
+  //   await socket.emit('send_message', messageData);
+
+  //   // adding message to list
+  //   setMessageList(list => [...list, messageData]);
+  //   setMessage('');
   }
+
+  // useEffect(() => {
+
+  //   // triggering the receiving message event 
+  //   socket.on('receive_message', (data) => {
+  //     setMessageList(list => [...list, data]);
+  //     console.log('received data:', data)
+  //   })
+
+  //   const boxElement = scrollRef.current;
+  //   boxElement.scrollTop = boxElement.scrollHeight;
+  //   return () => socket.removeListener('receive_message')
+
+  // }, [messageList, socket])
+  
+  
+  useEffect(() => {
+    if (isMsgLoading && !isMsgSuccess && !isMsgError) {
+      <Spinner />
+    }
+    else if (!isMsgLoading && isMsgSuccess && msgData && !isMsgError) {
+      toast.success( `Message: ${msgData.message}` )
+      setMessage('');
+    }
+
+    else if (!isMsgLoading && !isMsgSuccess && !msgData && isMsgError) {
+      toast.error('message not send')
+    }
+    
+  }, [isMsgLoading, isMsgError, isMsgSuccess, msgData]);
+
 
   useEffect(() => {
 
-    // triggering the receiving message event 
-    socket.on('receive_message', (data) => {
-      setMessageList(list => [...list, data]);
-    })
+    if (isAllMsgLoading && !isAllMsgSuccess && !isAllMsgError) {
+      <Spinner />
+    }
+    else if (!isAllMsgLoading && isAllMsgSuccess && allMsgData && !isAllMsgError) {
 
-    const boxElement = scrollRef.current;
-    boxElement.scrollTop = boxElement.scrollHeight;
-    return () => socket.removeListener('receive_message')
+      setMessageList(allMsgData)
+  
+      
+    }
 
-  }, [socket, messageList])
+    else if (!isAllMsgLoading && !isAllMsgSuccess && !allMsgData && isAllMsgError) {
+      toast.error('failed to get messages')
+    }
+
+  
+    
+  }, [isAllMsgError,isAllMsgLoading, isAllMsgSuccess, allMsgData])
+  
+  
 
   return (
 
-    <FlexCenter backgroundColor='#9cbaf0' height='100%' width='100%'>
+    <FlexCenter height='100vh' width='100%' >
 
-      <Paper sx={{ height: 'auto', padding: '2rem', width: '80%' }}>
+      <Paper sx={{
+        padding: '1.5rem', borderRadius: '15px',
+        boxShadow: 'rgba(17, 17, 26, 0.1) 0px 4px 16px, rgba(17, 17, 26, 0.05) 0px 8px 32px;',
+        paddingY: '3rem',
+        width:'50%'
+      }}
+      >
 
-        {/* header */}
-        <FlexBetween>
-          <FlexTextColumn gap={1}>
-            <Typography variant='h5'>Private Chat Room : {room}</Typography>
-            <Divider />
-          </FlexTextColumn>
+      
+        {/* Receiver chat header */}
+        {(isSuccess && !isLoading && !isError) && (
+          <>
 
-          <Avatar sx={{ marginTop: '0.5rem', bgcolor:'burlywood' }}>
-            {username?.charAt(0)}
-          </Avatar>
+          <FlexTextColumn gap={2}>
+            
+          <FlexBetween>
+              <FlexRow gap={2}>
+                
+                <Avatar sx={{ backgroundColor: '#111111' }}>{data?.user?.username.charAt(0).toUpperCase()}
+                </Avatar>
 
-        </FlexBetween>
+              <FlexTextColumn>
+                  <Typography fontWeight={600}>{data?.user?.username}</Typography>
+                  <Typography variant='caption'>{data?.user?.status ? 'Online' : 'Offline'}</Typography>
+                  
+                </FlexTextColumn>
+                
+            </FlexRow>
 
-        {/* conversation container */}
+            <Button variant='outlined' onClick={()=>navigate('/chat')}>
+            <ArrowBack/>
+              </Button>
+
+
+          </FlexBetween>
+
+          <Divider />
+
+
+        </FlexTextColumn>
+        
+
+
+            {/* Conversation Container */}
 
         <FlexColumn
           border='1px solid #ccc'
@@ -102,15 +197,18 @@ const Chat = ({ socket, username, room }) => {
             <FlexCenter padding={5}>
                   <Typography>No Messages found.</Typography>
                 </FlexCenter>
-          ) }
+          )}
+          
           {/* Iterating through the message array */}
           {messageList?.map(
           
             (messageContent, index) => {
 
               // checking the author of the message
-              let checkAuthor = username === messageContent.author ? 'you' : 'other';
-              return <ChatBubble checkAuthor={checkAuthor} messageContent={messageContent} index={index} />
+              const checkAuthor = parseInt(receiverId) === messageContent.receiver_id ? 'other' : 'you';
+  
+              
+              return <ChatBubble messageContent={messageContent} index={index} checkAuthor={checkAuthor} user={data?.user } />
               
       
           })}
@@ -118,12 +216,15 @@ const Chat = ({ socket, username, room }) => {
           
           {/* send message container */}
 
-          
-
         </FlexColumn>
+
+          </>)
+        
+        }
+
         <ChatForm
             message={message}
-            onChange={messageHandler}
+          onChange={messageHandler}
             sendMessage={sendMessage}
           />
 

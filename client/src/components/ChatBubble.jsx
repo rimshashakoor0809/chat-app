@@ -2,34 +2,53 @@ import React from 'react'
 import { FlexRow, FlexTextColumn } from './flex'
 import { Avatar, Box, Typography } from '@mui/material'
 
-const ChatBubble  = ({checkAuthor, messageContent, index}) => {
+
+
+// message time formatter in 12-hour format
+const formatDate = (date) => {
+  const newDate = new Date(date);
+  const formattedTime = newDate.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }); return formattedTime; // Output: 5:07 AM
+}
+
+const ChatBubble = ({ messageContent, index, checkAuthor, user }) => {
+
+
   return (
     <FlexRow
-                gap={1}
-                key={index}
-                justifyContent={checkAuthor === 'you' ? 'flex-start' :'flex-end' }
-              >
+      gap={1}
+      key={index}
+      justifyContent={checkAuthor === 'you' ? 'flex-start' : 'flex-end'}
+      
+    >
 
-                  <Avatar sx={{ marginTop: '0.5rem', bgcolor: `${checkAuthor === 'you' ? 'orange' : 'purple'}` }}>
-                    {messageContent?.author?.charAt(0)}
-                  </Avatar>
+      {/* {console.log('Message content: ', messageContent)} */}
 
-                  <FlexTextColumn>
+      <Avatar sx={{
+        marginTop: '0.5rem',
+        bgcolor: `${checkAuthor === 'you' ? 'orange' : 'purple'}`
+      }}>
+        
+      </Avatar>
 
-                    <Box
-                      padding={1}
-                      width='auto'
-                      backgroundColor={checkAuthor === 'you' ? 'skyblue' :'lightgray' }
-                      borderRadius={1}
-                      marginY={1}
-                    >
-                      <Typography> {messageContent?.message}</Typography>
-                    </Box>
-                    <Typography variant='caption'>{messageContent?.date}</Typography>
+      <FlexTextColumn>
 
-                  </FlexTextColumn>
+        <Box
+          padding={1}
+          width='auto'
+          backgroundColor={checkAuthor === 'you' ? '#565656' : 'lightgray'} borderRadius={1}
+          color={checkAuthor === 'you' && '#fcfcfc'}
 
-                </FlexRow>
+          marginY={1}
+        >
+          <FlexRow flexWrap='wrap'>
+          <Typography> {messageContent?.message}</Typography>
+          </FlexRow>
+        </Box>
+        <Typography variant='caption'>{formatDate(messageContent?.createdAt)}</Typography>
+
+      </FlexTextColumn>
+
+    </FlexRow>
   )
 }
 
