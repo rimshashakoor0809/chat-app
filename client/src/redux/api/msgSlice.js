@@ -6,15 +6,8 @@ export const msgSlice = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: 'http://127.0.0.1:3001/api/chat-app/chat',
     credentials: 'include',
-
-    prepareHeaders: (headers, { getState }) => {
-      const accessToken = localStorage.getItem('access_token');
-      if (accessToken) {
-        headers.set('Authorization', `Bearer ${accessToken}`);
-      }
-      return headers;
-    },
   }),
+  tagTypes: ['Message'],
 
   endpoints: (builder) => ({
 
@@ -24,13 +17,18 @@ export const msgSlice = createApi({
         url: "/message",
         method: 'POST',
         body: data
-      })
+      }),
+      invalidatesTags: (result, error, data) => [
+        { type: 'Message', id: data.sender },
+        { type: 'Message', id: data.receiver },
+      ],
     }),
 
 
 
     getAllMsgs: builder.query({
       query: (id) => `/message/${id}`,
+      providesTags: (result, error, id) => [{ type: 'Message', id }],
 
     }),
 

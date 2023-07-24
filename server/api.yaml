@@ -1,0 +1,300 @@
+swagger: "2.0"
+info:
+  title: Chat Application API
+  description: This is simple chat application api.
+  version: 1.0
+  contact:
+    email: rimsha.shakoor@gmail.com
+servers:
+    -url: http://localhost:3001/
+    -description: Local Server
+
+basePath: /api
+schemes:
+  - http
+
+paths:
+  /chat-app/users/register:
+    post:
+      tags:
+        - User
+      summary: Register a new user.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: user
+          in: body
+          description: New user data.
+          required: true
+          schema:
+            $ref: "#/definitions/UserInput"
+      responses:
+        200:
+          description: Successfully registered the new user.
+          schema:
+            $ref: "#/definitions/User"
+        400:
+          description: Bad request. Missing or invalid data.
+        409:
+          description: Conflict. User with the same email already exists.
+
+  /chat-app/users/login:
+    post:
+      tags:
+        - User
+      summary: User login.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: credentials
+          in: body
+          description: User login credentials (email and password).
+          required: true
+          schema:
+            $ref: "#/definitions/LoginCredentials"
+      responses:
+        200:
+          description: Successfully logged in. Returns access and refresh tokens.
+          schema:
+            $ref: "#/definitions/LoginResponse"
+        400:
+          description: Bad request. Missing or invalid data.
+        401:
+          description: Unauthorized. Invalid credentials.
+
+  /chat-app/users/logout:
+    post:
+      tags:
+        - User
+      summary: User logout.
+      produces:
+        - application/json
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: Successfully logged out.
+        401:
+          description: Unauthorized. Invalid or missing token.
+
+  /chat-app/users/all:
+    get:
+      tags:
+        - User
+      summary: Get a list of all users.
+      produces:
+        - application/json
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: Successfully retrieved the list of users.
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/User"
+        401:
+          description: Unauthorized. Invalid or missing token.
+
+  /chat-app/users/status:
+    patch:
+      tags:
+        - User
+      summary: Update user status.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: statusUpdate
+          in: body
+          description: User status update data.
+          required: true
+          schema:
+            $ref: "#/definitions/StatusUpdate"
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: Successfully updated user status.
+        400:
+          description: Bad request. Missing or invalid data.
+        401:
+          description: Unauthorized. Invalid or missing token.
+
+  /chat-app/users/{id}:
+    get:
+      tags:
+        - User
+      summary: Get user by ID.
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: User ID.
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Successfully retrieved the user.
+          schema:
+            $ref: "#/definitions/User"
+        401:
+          description: Unauthorized. Invalid or missing token.
+        404:
+          description: User not found.
+
+  /chat-app/chat/message:
+    post:
+      tags:
+        - Chat
+      summary: Send a new message.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: messageData
+          in: body
+          description: Message data including receiver and message.
+          required: true
+          schema:
+            $ref: "#/definitions/MessageInput"
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: Message stored to the database successfully.
+        400:
+          description: Bad request. Missing or invalid data.
+        401:
+          description: Unauthorized. Invalid or missing token.
+
+
+  /chat-app/chat/message/{receiverId}:
+    get:
+      tags:
+        - Chat
+      summary: Fetch all messages with a specific receiver.
+      produces:
+        - application/json
+      parameters:
+        - name: receiverId
+          in: path
+          description: Receiver's user ID.
+          required: true
+          type: integer
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: Successfully retrieved messages with the specified receiver.
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Message"
+        401:
+          description: Unauthorized. Invalid or missing token.
+
+
+definitions:
+  User:
+    type: object
+    properties:
+      user_id:
+        type: integer
+      username:
+        type: string
+      email:
+        type: string
+        format: email
+      status:
+        type: boolean
+    required:
+      - user_id
+      - username
+      - email
+      - status
+
+  UserInput:
+    type: object
+    properties:
+      name:
+        type: string
+      email:
+        type: string
+        format: email
+      password:
+        type: string
+    required:
+      - name
+      - email
+      - password
+
+  LoginCredentials:
+    type: object
+    properties:
+      email:
+        type: string
+        format: email
+      password:
+        type: string
+    required:
+      - email
+      - password
+
+  LoginResponse:
+    type: object
+    properties:
+      user:
+        $ref: "#/definitions/User"
+      accessToken:
+        type: string
+      refreshToken:
+        type: string
+
+  StatusUpdate:
+    type: object
+    properties:
+      newStatus:
+        type: boolean
+    required:
+      - newStatus
+
+  Message:
+    type: object
+    properties:
+      msg_id:
+        type: integer
+      sender_id:
+        type: integer
+      receiver_id:
+        type: integer
+      users:
+        type: array
+        items:
+          type: integer
+      message:
+        type: string
+    required:
+      - msg_id
+      - sender_id
+      - receiver_id
+      - users
+      - message
+
+  MessageInput:
+    type: object
+    properties:
+      receiver:
+        type: integer
+      message:
+        type: string
+    required:
+      - receiver
+      - message

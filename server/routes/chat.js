@@ -8,15 +8,10 @@ const router = express.Router();
 router
   .route('/message')
   .post(authorize.verifyUser, ChatController.sendMessage)
-  .get(authorize.verifyUser, ChatController.fetchAllMessages)
 
 router
   .route('/message/:receiverId')
-  .get( ChatController.fetchAllMessages)
-
-// authorize.verifyUser,
-
-
+  .get(authorize.verifyUser, ChatController.fetchAllMessages)
 
 
 module.exports = router;

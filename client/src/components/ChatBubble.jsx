@@ -5,18 +5,28 @@ import { Avatar, Box, Typography } from '@mui/material'
 
 
 // message time formatter in 12-hour format
-const formatDate = (date) => {
-  const newDate = new Date(date);
-  const formattedTime = newDate.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }); return formattedTime; // Output: 5:07 AM
-}
+const formatDate = (dateString) => {
+  try {
+    const date = new Date(dateString);
+    const formattedTime = date.toLocaleTimeString([], {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+    return formattedTime; // Output: 5:07 AM
+  } catch (error) {
+    console.log('Error while formatting date:', error);
+    return ''; // Return an empty string if date parsing fails
+  }
+};
 
-const ChatBubble = ({ messageContent, index, checkAuthor, user }) => {
+const ChatBubble = ({ messageContent, checkAuthor, user,myKey }) => {
 
 
   return (
     <FlexRow
       gap={1}
-      key={index}
+      key={myKey}
       justifyContent={checkAuthor === 'you' ? 'flex-start' : 'flex-end'}
       
     >
@@ -25,8 +35,9 @@ const ChatBubble = ({ messageContent, index, checkAuthor, user }) => {
 
       <Avatar sx={{
         marginTop: '0.5rem',
-        bgcolor: `${checkAuthor === 'you' ? 'orange' : 'purple'}`
+        bgcolor: `${checkAuthor === 'you' ? 'purple' : 'orange'}`
       }}>
+        {checkAuthor === 'you' ?'O' : 'S'}
         
       </Avatar>
 
@@ -35,7 +46,7 @@ const ChatBubble = ({ messageContent, index, checkAuthor, user }) => {
         <Box
           padding={1}
           width='auto'
-          backgroundColor={checkAuthor === 'you' ? '#565656' : 'lightgray'} borderRadius={1}
+          backgroundColor={checkAuthor === 'you' ? '#696969' : 'lightgray'} borderRadius={1}
           color={checkAuthor === 'you' && '#fcfcfc'}
 
           marginY={1}

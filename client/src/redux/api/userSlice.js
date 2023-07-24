@@ -1,20 +1,13 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-
+import { HandleJWTExpiration } from '../../auth/HandleJWTExpiration';
 
 export const userSlice = createApi({
   reducerPath: 'userApi',
   baseQuery: fetchBaseQuery({
     baseUrl: 'http://127.0.0.1:3001/api/chat-app/users',
     credentials: 'include',
-
-    prepareHeaders: (headers, { getState }) => {
-      const accessToken = localStorage.getItem('access_token');
-      if (accessToken) {
-        headers.set('Authorization', `Bearer ${accessToken}`);
-      }
-      return headers;
-    },
   }),
+  tagTypes: ['User'],
 
   endpoints: (builder) => ({
 
@@ -24,7 +17,8 @@ export const userSlice = createApi({
         url: "/register",
         method: 'POST',
         body: data
-      })
+      }),
+      invalidatesTags: ['User']
     }),
 
     login: builder.mutation({
@@ -32,16 +26,27 @@ export const userSlice = createApi({
         url: "/login",
         method: 'POST',
         body: data
-      })
+      }),
+      invalidatesTags: ['User']
+    }),
+
+    logout: builder.mutation({
+      query: () => ({
+        url: "/logout",
+        method: 'POST',
+      }),
+      invalidatesTags: ['User']
     }),
 
     getUserWithID: builder.query({
       query: (id) => `/${id}`,
+      invalidatesTags: ['User']
 
     }),
 
     getUserList: builder.query({
       query: () => `/all`,
+      providesTags: ['User']
 
     }),
 
@@ -50,9 +55,21 @@ export const userSlice = createApi({
         url: "/status",
         method: 'PATCH',
         body: data
-      })
+      }),
+      invalidatesTags: ['User']
     }),
-  })
+
+
+
+  }),
+
+  // onError: (error, { dispatch }) => {
+  //   const { status } = error.response;
+
+  //   if (status === 401) {
+  //     HandleJWTExpiration();
+  //   }
+  // },
 })
 
 export const {
@@ -60,6 +77,8 @@ export const {
   useLoginMutation,
   useGetUserWithIDQuery,
   useGetUserListQuery,
-  useUpdateStatusMutation
+  useUpdateStatusMutation,
+  useLogoutMutation
+
 
 } = userSlice;

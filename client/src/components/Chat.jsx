@@ -1,38 +1,41 @@
-import { Avatar, Button, Divider,  Paper, Typography } from '@mui/material';
+import { Avatar,  Divider,  Typography } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react'
-import { FlexBetween, FlexCenter, FlexColumn, FlexRow, FlexTextColumn } from './flex';
+import { FlexCenter, FlexColumn, FlexRow, FlexTextColumn } from './flex';
 import ChatForm from './ChatForm';
 import ChatBubble from './ChatBubble';
 import { toast } from 'react-toastify'
-
-import { useNavigate, useParams } from 'react-router-dom';
-import { useGetUserWithIDQuery } from '../redux/api/userSlice';
-import { ArrowBack } from '@mui/icons-material';
 import { useAddMessageMutation, useGetAllMsgsQuery } from '../redux/api/msgSlice';
 import Spinner from '../components/ui/Spinner';
+import { io } from 'socket.io-client';
 
 
 
 
-const Chat = () => {
+const Chat = ({ currentChat, currentUser }) => {
 
   const [message, setMessage] = useState('');
   const [messageList, setMessageList] = useState([]);
+  const [arrivalMsg, setArrivalMsg] = useState(null);
   const scrollRef = useRef(null);
-  const navigate = useNavigate();
-  const { receiverId } = useParams();
+  const socket = useRef();
 
 
-  const { data, isSuccess, isLoading, isError } = useGetUserWithIDQuery(receiverId);
-  
   const [addMessage, { data: msgData, isLoading: isMsgLoading, isSuccess: isMsgSuccess, isError: isMsgError }] = useAddMessageMutation();
 
-  
 
-  const { data: allMsgData, isSuccess: isAllMsgSuccess, isLoading: isAllMsgLoading, isError: isAllMsgError } = useGetAllMsgsQuery(receiverId);
-  
+  const { data: allMsgData, isSuccess: isAllMsgSuccess, isLoading: isAllMsgLoading, isError: isAllMsgError } = useGetAllMsgsQuery(currentChat?.user_id);
 
-  console.log('message list:', allMsgData);
+
+  // handling sockets
+
+  useEffect(() => {
+
+    if (currentUser) {
+      socket.current = io('http://localhost:3001');
+      socket.current.emit('add_user', currentUser.id)
+    }
+  }, [currentUser])
+
 
 
 
@@ -41,77 +44,79 @@ const Chat = () => {
     setMessage(e.target.value);
   }
 
- 
-
   // send message method
   const sendMessage = async () => {
 
     try {
-
       if (!message) {
         return toast.error('Please enter a message to send');
       }
 
       const myData = {
-          receiver: receiverId,
-          message: message
-      }        
-      
-      await addMessage(myData);
-    
+        receiver: currentChat?.user_id,
+        sender:currentUser?.id,
+        message: message
+      }
 
+      await addMessage(myData);
+      socket.current.emit('send_msg', {
+        receiver_id: currentChat.user_id,
+        sender_id: currentUser.id,
+        message: message
+      })
+
+      setMessage('');
       
+
     } catch (error) {
       console.log('Error:', error)
     }
-  //   // message data
-  //   const messageData = {
-
-  //     roomId: room,
-  //     author: data?.userInfo?.username,
-  //     message,
-  //     senderId: data?.userInfo?.user_id
-  //   }
-
-  //   // sending message to socket
-  //   await socket.emit('send_message', messageData);
-
-  //   // adding message to list
-  //   setMessageList(list => [...list, messageData]);
-  //   setMessage('');
   }
 
-  // useEffect(() => {
-
-  //   // triggering the receiving message event 
-  //   socket.on('receive_message', (data) => {
-  //     setMessageList(list => [...list, data]);
-  //     console.log('received data:', data)
-  //   })
-
-  //   const boxElement = scrollRef.current;
-  //   boxElement.scrollTop = boxElement.scrollHeight;
-  //   return () => socket.removeListener('receive_message')
-
-  // }, [messageList, socket])
-  
-  
   useEffect(() => {
+    if (socket.current) {
+      socket.current.on('msg_received', (msg) => {
+        setArrivalMsg({
+          receiver_id: currentChat.user_id,
+          sender_id: currentUser.id,
+          message:msg
+        })
+        
+      })
+    }
+  }, [currentChat, currentUser]);
+
+
+  useEffect(() => {
+  
+    arrivalMsg?.message && setMessageList((prev) => [...prev, arrivalMsg])
+  
+  }, [arrivalMsg])
+  
+  // Sort the messageList array based on the 'createdAt' timestamp before rendering
+  const sortedMessageList = messageList.slice().sort((a, b) => {
+    return new Date(a.createdAt) - new Date(b.createdAt);
+  });
+
+
+
+
+  // storing messages into db
+  useEffect(() => {
+
     if (isMsgLoading && !isMsgSuccess && !isMsgError) {
       <Spinner />
     }
-    else if (!isMsgLoading && isMsgSuccess && msgData && !isMsgError) {
-      toast.success( `Message: ${msgData.message}` )
-      setMessage('');
-    }
-
+  
     else if (!isMsgLoading && !isMsgSuccess && !msgData && isMsgError) {
+
       toast.error('message not send')
     }
-    
+
   }, [isMsgLoading, isMsgError, isMsgSuccess, msgData]);
 
 
+  // fetching all the messages
   useEffect(() => {
 
     if (isAllMsgLoading && !isAllMsgSuccess && !isAllMsgError) {
@@ -120,119 +125,95 @@ const Chat = () => {
     else if (!isAllMsgLoading && isAllMsgSuccess && allMsgData && !isAllMsgError) {
 
       setMessageList(allMsgData)
-  
-      
+
     }
 
     else if (!isAllMsgLoading && !isAllMsgSuccess && !allMsgData && isAllMsgError) {
       toast.error('failed to get messages')
     }
 
-  
-    
-  }, [isAllMsgError,isAllMsgLoading, isAllMsgSuccess, allMsgData])
-  
-  
+  }, [isAllMsgError, isAllMsgLoading, isAllMsgSuccess, allMsgData])
+
+
+  // Scrolls down to the bottom of container
+  useEffect(() => {
+    const boxElement = scrollRef.current;
+    if (boxElement) {
+      boxElement.scrollTop = boxElement.scrollHeight;
+    }
+  }, [messageList]);
 
   return (
 
-    <FlexCenter height='100vh' width='100%' >
+    <>
+      {/* Receiver chat header */}
 
-      <Paper sx={{
-        padding: '1.5rem', borderRadius: '15px',
-        boxShadow: 'rgba(17, 17, 26, 0.1) 0px 4px 16px, rgba(17, 17, 26, 0.05) 0px 8px 32px;',
-        paddingY: '3rem',
-        width:'50%'
-      }}
+      <FlexTextColumn gap={2} >
+
+        <FlexRow gap={2}>
+
+          <Avatar sx={{ backgroundColor: '#111111' }}>{currentChat?.username.charAt(0).toUpperCase()}
+          </Avatar>
+
+          <FlexTextColumn>
+            <Typography fontWeight={600}>{currentChat?.username}</Typography>
+            <Typography variant='caption'>{currentChat?.status ? 'Online' : 'Offline'}</Typography>
+
+          </FlexTextColumn>
+
+        </FlexRow>
+
+        <Divider />
+      </FlexTextColumn>
+
+      {/* Conversation Container */}
+
+      <FlexColumn
+        border='1px solid #ccc'
+        marginY={2}
+        borderRadius={2}
+        padding={2}
+        height='100%'
+        sx={{ maxHeight: 250, overflow: 'auto' }}
+        ref={scrollRef}
+    
+
       >
 
-      
-        {/* Receiver chat header */}
-        {(isSuccess && !isLoading && !isError) && (
-          <>
+        {sortedMessageList.length === 0 && (
 
-          <FlexTextColumn gap={2}>
-            
-          <FlexBetween>
-              <FlexRow gap={2}>
-                
-                <Avatar sx={{ backgroundColor: '#111111' }}>{data?.user?.username.charAt(0).toUpperCase()}
-                </Avatar>
+          <FlexCenter padding={5} height='100%' alignItems='center'>
+            <Typography>No Messages found.</Typography>
+          </FlexCenter>
+        )}
 
-              <FlexTextColumn>
-                  <Typography fontWeight={600}>{data?.user?.username}</Typography>
-                  <Typography variant='caption'>{data?.user?.status ? 'Online' : 'Offline'}</Typography>
-                  
-                </FlexTextColumn>
-                
-            </FlexRow>
+        {/* Iterating through the message array */}
+        {sortedMessageList?.map(
 
-            <Button variant='outlined' onClick={()=>navigate('/chat')}>
-            <ArrowBack/>
-              </Button>
+          (messageContent, index) => {
+            // console.log('message content', messageContent)
+
+            // checking the author of the message
+            const checkAuthor = parseInt(currentChat?.user_id) === messageContent.receiver_id ? 'other' : 'you';
 
 
-          </FlexBetween>
 
-          <Divider />
-
-
-        </FlexTextColumn>
-        
+            return <ChatBubble messageContent={messageContent} myKey={messageContent.msg_id} checkAuthor={checkAuthor} user={currentChat} />
 
 
-            {/* Conversation Container */}
-
-        <FlexColumn
-          border='1px solid #ccc'
-          marginY={2}
-          borderRadius={2}
-          padding={2}
-          sx={{ maxHeight: 300, overflow: 'auto' }}
-          ref={scrollRef}
-        >
-          
-          {messageList.length === 0 && (
-
-            <FlexCenter padding={5}>
-                  <Typography>No Messages found.</Typography>
-                </FlexCenter>
-          )}
-          
-          {/* Iterating through the message array */}
-          {messageList?.map(
-          
-            (messageContent, index) => {
-
-              // checking the author of the message
-              const checkAuthor = parseInt(receiverId) === messageContent.receiver_id ? 'other' : 'you';
-  
-              
-              return <ChatBubble messageContent={messageContent} index={index} checkAuthor={checkAuthor} user={data?.user } />
-              
-      
           })}
 
-          
-          {/* send message container */}
+      </FlexColumn>
 
-        </FlexColumn>
-
-          </>)
-        
-        }
-
-        <ChatForm
-            message={message}
-          onChange={messageHandler}
-            sendMessage={sendMessage}
-          />
-
-
-
-      </Paper>
-    </FlexCenter>
+      {/* send message container */}
+      <ChatForm
+        message={message}
+        onChange={messageHandler}
+        sendMessage={sendMessage}
+      />
+    </>
   )
 }
 
 export default Chat
+

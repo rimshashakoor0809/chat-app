@@ -26,6 +26,7 @@ export const FlexRow = styled(Box)({
 export const FlexColumn = styled(Box)({
   display: "flex",
   flexDirection: 'column',
+  
 });
 export const FlexTextColumn = styled(Box)({
   display: "flex",

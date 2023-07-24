@@ -1,59 +1,65 @@
-import React from 'react'
-import { FlexBetween, FlexRow, FlexTextColumn } from './flex'
+import React, { useEffect } from 'react'
+import { FlexBetween, FlexColumn, FlexRow, } from './flex'
 import { Avatar, Button, Divider, Typography } from '@mui/material'
 import { toast } from 'react-toastify'
-import { useUpdateStatusMutation } from '../redux/api/userSlice'
+import {  useLogoutMutation } from '../redux/api/userSlice'
 import { useNavigate } from 'react-router-dom'
 import Spinner from './ui/Spinner'
+import { PowerSettingsNew } from '@mui/icons-material'
 
 const Header = ({ info }) => {
 
-  const [updateStatus, {  isLoading, isSuccess, isError, error }] = useUpdateStatusMutation();
-  const navigate = useNavigate();
-
+  const [logoutUser, { data, isLoading, isSuccess, isError, error }, refetch] = useLogoutMutation();
   
-  const logOut = async() => {
-    
+  const navigate = useNavigate();
+  
+
+  const logOut = async () => {        
     
     try {
-      await updateStatus({newStatus: false})
-      if (isLoading && !isSuccess && !isError) {
-        <Spinner/>
-      }
-
-      else if (!isLoading && isSuccess && !isError) {
-        console.log('Status updated')
-        localStorage.removeItem('access_token');
-        toast.success("Logout Successfully.") 
-      }
-
-      else if (!isLoading && !isSuccess && isError && error) {
-        console.log('Error updating:', error?.data?.message)
-      }
+      await logoutUser();
       
     } catch (error) {
       console.log('Error: ', error)
     }
-    navigate('/login')
   }
 
+
+  useEffect(() => {
+
+    if (isLoading) {
+      <Spinner />;
+    }
+    
+    if (isSuccess && !isError && !error && !isLoading) {
+      console.log('success')
+      toast.success(data?.message);
+      navigate('/login');
+    } else if (!isLoading && isError && error) {
+
+      console.log('Error updating:', error);
+    }
+    
+  }, [isSuccess, isError, error, data, isLoading,navigate])
+  
   return (
     <>
       <FlexBetween gap={9}>
 
             <FlexRow gap={2}>
           <Avatar sx={{ backgroundColor: '#111111' }}>
-            {info?.userInfo?.name?.charAt(0).toUpperCase()}
+            {info?.name.charAt(0).toUpperCase()}
           </Avatar>
 
-              <FlexTextColumn>
-            <Typography fontWeight={600}>{info?.userInfo?.name}</Typography>
+              <FlexColumn>
+            <Typography fontWeight={600}>{info?.name}</Typography>
+            <Typography fontSize={12}>{info?.email}</Typography>
             
-            <Typography variant='caption'>{info?.userInfo?.status ? 'Online' : 'Offline'}</Typography>
-            
-              </FlexTextColumn>
+              </FlexColumn>
             </FlexRow>
-            <Button variant='contained' onClick={logOut}>Log out</Button>
+        <Button variant='contained' onClick={logOut}>
+          <PowerSettingsNew/>
+            </Button>
 
           </FlexBetween>
           <Divider />

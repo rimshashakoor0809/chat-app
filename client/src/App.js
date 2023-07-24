@@ -8,8 +8,6 @@ import ChatList from "./pages/chat/ChatList";
 import Chat from './components/Chat'
 
 
-
-
 function App() {
 
 
@@ -23,7 +21,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/chat" element={<ChatList />} />
-        <Route path="/chat/:receiverId" element={<Chat />} />
+        <Route path="/chat/user" element={<Chat />} />
       </Routes>
     </>
 

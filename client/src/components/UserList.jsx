@@ -16,20 +16,14 @@ function generateRandomColor() {
 
   return color;
 }
-const UserList = ({ user, onClick }) => {
+const UserList = ({ user, onClick}) => {
 
-  const [selectUser, setSelectUser] = useState(false);
-  const navigate = useNavigate();
-
-  
+  // console.log('My key', myKey)
   return (
     
-    <Box>
-
-      {selectUser && navigate(`/chat/${user.user_id}`)}
+    <>
       
-      <FlexBetween marginX={2} marginY={1} onClick={() => setSelectUser(true)} >
-
+      <FlexBetween marginX={2} marginY={1} onClick={onClick}  >
         
         <FlexRow gap={2}>
 
@@ -54,7 +48,7 @@ const UserList = ({ user, onClick }) => {
 
       </FlexBetween>
       <Divider variant='middle' />
-    </Box>
+    </>
   )
 }
 

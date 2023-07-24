@@ -51,9 +51,9 @@ const Login = () => {
     console.log('form data login', formData);
     try {
       await login(userData);
-      console.log('check success', isSuccess)
-      console.log('check isError', isError)
-      console.log('check error', error)
+      // console.log('check success', isSuccess)
+      // console.log('check isError', isError)
+      // console.log('check error', error)
       
     } catch (error) {
       console.log('Actual Error', error)
@@ -71,7 +71,6 @@ const Login = () => {
 
       if (isSuccess && !isLoading && !error) {
       toast.success("Login Successfully.")
-      localStorage.setItem('access_token', data?.token);
       navigate('/chat')
     }
     
@@ -80,9 +79,6 @@ const Login = () => {
 
   return (
     <div className={`container ${styles.auth}`}>
-
-      {/* {showChat ?
-        <Chat socket={socket} username={email} room={email} /> : */}
       
       {isLoading && <Spinner/>}
       <Paper sx={{

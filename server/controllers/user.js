@@ -2,9 +2,10 @@ const User = require('../models/UserModel');
 const bcryptjs = require('bcryptjs');
 const ErrorHandler = require('../utils/ErrorHandler');
 const sequelize = require('../connect');
-const { generateToken } = require('../utils/GenerateToken');
+const { generateToken } = require('../utils/TokenHandler');
 const { Op } = require('sequelize');
 
+// joi 
 
 exports.signUpUser = async (req, res, next) => {
   try {
@@ -82,20 +83,32 @@ exports.login = async (req, res, next) => {
       status: user.status
     }
 
-    // generate token
-    const token = generateToken(payload);
+    // generate access token with 15-minute expiry
+    const accessToken = generateToken(payload, '15min', process.env.JWT_SECRET);
+
+
+    // generate refresh token with a longer expiry (e.g., 7 days)
+    const refreshToken = generateToken(payload, '7d', process.env.JWT_SECRET_REFRESH);
 
     // Update the user's status to true
     user.status = true;
     await user.save();
 
-    res.status(200).json({
-      user,
-      token,
+    const combinedTokens = `${accessToken}|${refreshToken}`;
+
+
+    res.cookie('authTokens', combinedTokens, {
+      httpOnly: true,
+      expires: new Date(Date.now() + 1000 * 86400), //1d
+      sameSite: 'none',
+      secure: true
     });
 
-
-
+    res.status(200).json({
+      user,
+      accessToken,
+      refreshToken,
+    });
 
   }
   catch (err) {
@@ -104,6 +117,7 @@ exports.login = async (req, res, next) => {
     return next(ErrorHandler({ status: 500, message: 'Server Error: Something went wrong, try again😥' }));
   }
 }
+
 
 
 exports.getUserWithID = async (req, res, next) => {
@@ -134,6 +148,7 @@ exports.getUsersList = async (req, res, next) => {
   try {
 
     console.log('User data', req.user);
+
 
     // const users = await User.findAll();
     const users = await User.findAll({
@@ -193,4 +208,37 @@ exports.updateStatus = async (req, res, next) => {
   }
 }
 
+
+exports.logout = async (req, res, next) => {
+
+  try {
+
+    // Update the user's status to false (assuming 'status' represents the user's login status)
+    console.log('user check64837', req.user.id);
+    const user = await User.findOne({ where: { user_id: req.user.id } });
+    user.status = false;
+    await user.save();
+
+    if (!user) {
+      next(ErrorHandler({ status: 400, message: 'user does not exists😥' }));
+    }
+
+    res.cookie('authTokens', null, {
+      httpOnly: true,
+      expires: new Date(0),
+      sameSite: 'none',
+      secure: true
+    });
+
+    res.status(200).json({
+      message: 'Logout Successfully'
+    });
+
+  }
+  catch (err) {
+    console.log(`Error:  ${err}\n Error Message: ${err.message}`);
+
+    return next(ErrorHandler({ status: 500, message: 'Server Error: Something went wrong, try again😥' }));
+  }
+}
 

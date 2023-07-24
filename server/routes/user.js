@@ -3,6 +3,7 @@ const UserController = require('../controllers/user');
 const authorize = require('../utils/auth');
 // router middleware
 
+
 const router = express.Router();
 
 router
@@ -13,6 +14,10 @@ router
 router
   .route('/login')
   .post(UserController.login);
+
+router
+  .route('/logout')
+  .post(authorize.verifyUser, UserController.logout);
 
 
 

@@ -1,4 +1,3 @@
-const { Server } = require('socket.io');
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const morgan = require("morgan");
@@ -6,11 +5,33 @@ const cors = require('cors');
 const http = require('http');
 const util = require('util');
 const dotenv = require('dotenv');
+const swaggerUI = require('swagger-ui-express')
+const swaggerDoc = require('swagger-jsdoc');
+const YAML = require('yamljs');
+const swaggerJsDoc = YAML.load('./api.yaml');
 const userRoute = require('./routes/user');
 const chatRoute = require('./routes/chat');
 
 
 const app = express();
+
+// const options = {
+//   definition: {
+//     openapi: '3.0.3',
+//     info: {
+//       title: 'Chat Application API',
+//       version: '1.0.0',
+//       description: 'Simple chat-application API'
+//     },
+//     servers: ['http://localhost:3001'],
+//   },
+//   apis: ['./routes/*.js']
+// }
+
+// const specs = swaggerDoc(options);
+
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerJsDoc))
+
 
 dotenv.config();
 
@@ -39,62 +60,10 @@ app.use(function (req, res, next) {
 app.use('/api/chat-app/users', userRoute);
 app.use('/api/chat-app/chat', chatRoute);
 
-// global error handler
-app.use((err, req, res, next) => {
-  const status = err.status || 500;
-  const message = err.message || 'Internal Server Error';
-  return res.status(status).json({
-    message: message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : null,
-  })
-})
 
 
 
-// const server = http.createServer(app);
 
-// // connect express app with socket.io
-// const io = new Server(server, {
-//   cors: {
-//     origin: 'http://localhost:3000',
-//     methods: ['GET', 'POST']
-//   }
-// })
-
-// // checks if someone is connected with the server
-// io.on('connection', socket => {
-
-//   console.log('User Connected🔏: ', socket.id);
-
-//   socket.on('join_room', data => {
-
-//     socket.join(data);
-//     console.log(`User with ID: ${socket.id} joined the room: ${data}`);
-
-//   })
-
-//   // sending messages
-
-//   socket.on('send_message', async (data) => {
-
-//     console.log('Message', data);
-//     try {
-
-
-//       socket.to(data?.room).emit('receive_message', data);
-
-//     } catch (error) {
-
-//       console.log('Error:', error);
-
-//     }
-
-//   })
-
-//   socket.on('disconnected', socket => {
-//     console.log('User Disconnected😞: ', socket.id);
-//   })
-// })
 
 
 

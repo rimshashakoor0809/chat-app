@@ -1,8 +1,7 @@
-import { Box, Button, TextField } from '@mui/material';
-import React, { useState } from 'react'
-import { Mood, SendRounded } from '@mui/icons-material'
+import {  Button, TextField } from '@mui/material';
+import React, { } from 'react'
+import {  SendRounded } from '@mui/icons-material'
 import { FlexBetween } from './flex';
-import Picker from 'emoji-picker-react';
 
 
 
@@ -11,7 +10,10 @@ const ChatForm = ({ message, onChange, sendMessage }) => {
 
 
   return (
-    <FlexBetween width='100%'>
+    <FlexBetween width='100%' sx={{
+      position: 'absolute',
+      bottom:0
+    }}>
       
       <TextField
         name='message'
