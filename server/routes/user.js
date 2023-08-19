@@ -15,6 +15,11 @@ router
   .route('/login')
   .post(UserController.login);
 
+
+router
+  .route('/change-password')
+  .post(authorize.verifyUser, UserController.changePassword);
+
 router
   .route('/logout')
   .post(authorize.verifyUser, UserController.logout);
@@ -33,5 +38,8 @@ router
   .route('/:id')
   .get(UserController.getUserWithID);
 
+// router
+//   .route('/google/callback')
+//   .post(UserController.loginWithGoogle);
 
 module.exports = router;
